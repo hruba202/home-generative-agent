@@ -4120,8 +4120,30 @@ def test_baseline_deviation_message_is_localized() -> None:
     english = _baseline_deviation_mobile_message(finding)
     assert _baseline_deviation_mobile_message(finding, _l10n_hass("en")) == english
     assert _baseline_deviation_mobile_message(finding, _l10n_hass("cs")) == (
-        "Playroom Attic Humidity: 65.0% oproti obvyklým 49.2% (32 % nad normálem). "
+        "Playroom Attic Humidity: 65% oproti obvyklým 49,2% (32 % nad normálem). "
         "Stojí za kontrolu."
+    )
+
+
+def test_baseline_deviation_message_uses_the_czech_decimal_comma() -> None:
+    evidence = {
+        "template_id": "baseline_deviation",
+        "entity_id": "sensor.fridge_power",
+        "friendly_name": "Fridge Power",
+        "unit_of_measurement": "W",
+        "device_class": "power",
+        "current_value": 120.34,
+        "baseline_value": 80.0,
+        "deviation_pct": 50.4,
+        "deviation_direction": "above",
+    }
+    finding = _baseline_finding(evidence)
+    assert _baseline_deviation_mobile_message(finding) == (
+        "Fridge: 120.3W vs usual 80.0W (50% above normal). Check appliance."
+    )
+    assert _baseline_deviation_mobile_message(finding, _l10n_hass("cs")) == (
+        "Fridge: 120,3W oproti obvyklým 80W (50 % nad normálem). "
+        "Zkontrolujte spotřebič."
     )
 
 

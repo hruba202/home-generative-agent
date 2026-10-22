@@ -61,6 +61,7 @@ from custom_components.home_generative_agent.sentinel.models import (
 from custom_components.home_generative_agent.sentinel.notifier_messages import (
     notif_language,
     notif_msg,
+    notif_number,
     notif_plural_category,
 )
 from custom_components.home_generative_agent.sentinel.owed import SEEN_WHILE_SILENCED
@@ -1438,8 +1439,8 @@ def _baseline_deviation_mobile_message(
         except (TypeError, ValueError):
             have_values = False
     if have_values:
-        cur = round(cur_f, 1)
-        base = round(base_f, 1)
+        cur = notif_number(hass, cur_f)
+        base = notif_number(hass, base_f)
         pct = ""
         if pct_val is not None:
             pct_key = (

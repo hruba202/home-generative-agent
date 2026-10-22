@@ -530,3 +530,34 @@ def notif_plural_category(count: int) -> str:
     if 2 <= n % 10 <= 4 and not 12 <= n % 100 <= 14:  # noqa: PLR2004
         return "few"
     return "many"
+
+
+# Per language: (decimal separator, drop a trailing ".0" from whole numbers).
+# English keeps the rounded float exactly as it was printed before this table
+# existed ("80.0"); Czech writes "80" and "49,2". A language that is not listed
+# falls back to English.
+_NUMBER_STYLE: dict[str, tuple[str, bool]] = {
+    "en": (".", False),
+    "cs": (",", True),
+}
+
+
+def notif_number(hass: HomeAssistant | None, value: float, decimals: int = 1) -> str:
+    """
+    Format *value* rounded to *decimals* places in the notification language.
+
+    The caller guarantees a finite number. English prints the rounded float as
+    Python does ("80.0", and "-0.0" for a tiny negative value). Czech uses a
+    decimal comma, drops the zero decimals of a whole number ("80", "49,2")
+    and never prints a negative zero.
+    """
+    separator, trim = _NUMBER_STYLE.get(_resolve_language(hass), _NUMBER_STYLE["en"])
+    rounded = round(float(value), decimals)
+    if not trim:
+        return str(rounded)
+    text = f"{rounded:.{decimals}f}"
+    if "." in text:
+        text = text.rstrip("0").rstrip(".")
+    if text in {"", "-0"}:
+        text = "0"
+    return text.replace(".", separator)

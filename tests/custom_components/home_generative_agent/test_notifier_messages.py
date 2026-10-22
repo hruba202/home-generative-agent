@@ -15,6 +15,7 @@ from custom_components.home_generative_agent.sentinel.notifier_messages import (
     _MESSAGES,
     notif_language,
     notif_msg,
+    notif_number,
     notif_plural_category,
 )
 
@@ -286,6 +287,34 @@ def test_czech_plural_forms_are_distinct_where_the_grammar_needs_it() -> None:
     assert len(forms) == 3
     assert czech["age_days_few"] != czech["age_days_many"]
     assert czech["age_hours_few"] != czech["age_hours_many"]
+
+
+@pytest.mark.parametrize(
+    ("value", "english", "czech"),
+    [
+        (80.0, "80.0", "80"),
+        (120.34, "120.3", "120,3"),
+        (49.2, "49.2", "49,2"),
+        (-3.0, "-3.0", "-3"),
+        (1000.0, "1000.0", "1000"),
+        (2.96, "3.0", "3"),
+        (0.0, "0.0", "0"),
+        # A tiny negative value rounds to a negative zero. Czech never prints
+        # one; English keeps printing the rounded float as it always did.
+        (-0.04, "-0.0", "0"),
+    ],
+)
+def test_notif_number_follows_the_language(
+    value: float, english: str, czech: str
+) -> None:
+    assert notif_number(None, value) == english
+    assert notif_number(_fake_hass("en"), value) == english
+    assert notif_number(_fake_hass("cs"), value) == czech
+
+
+def test_notif_number_falls_back_to_english_for_unlisted_languages() -> None:
+    assert notif_number(_fake_hass("de"), 80.0) == "80.0"
+    assert notif_number(_fake_hass("de"), 49.2) == "49.2"
 
 
 def test_notif_language_resolves_base_language_and_falls_back() -> None:
